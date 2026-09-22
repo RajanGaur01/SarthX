@@ -1,0 +1,37 @@
+﻿rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =========================================================================
+    // SarthX GovTech 2.0 Security Rules
+    // Protects Citizen Demographic Data, DigiVault Documents & DBT Applications
+    // =========================================================================
+
+    // 1. Citizen Profiles: Each authenticated citizen can ONLY read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow access to citizen's nested subcollections (applications, documents, history)
+      match /{subcollection=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // 2. Public / Matched Schemes Catalog (Read-Only for all citizens)
+    match /schemes/{schemeId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // ⚠️ HACKATHON / TEST MODE OVERRIDE (Optional)
+    // If you want open read/write access during your hackathon demo without
+    // enforcing UID matching, uncomment the block below:
+    // =========================================================================
+    /*
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    */
+  }
+}
